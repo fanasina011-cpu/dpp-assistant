@@ -2,8 +2,10 @@
  * Page Délégations v6 — même pattern que Taches.
  * Pas de "modifier" (pas d'endpoint update) — actions : Révoquer, Supprimer.
  *
- * `DelegationViewSet` n'expose ni `search_fields` ni de période : le tri est
- * donc partiellement serveur, et la recherche reste un filtre local.
+ * `DelegationViewSet` n'expose pas de période : le tri reste partiellement
+ * serveur (`role_delegue` est un ordre métier, `delegant`/`delegataire` des
+ * colonnes jointes). La recherche porte sur les noms des deux parties, le
+ * rôle délégué et le service.
  */
 
 import { useMemo, useState } from 'react'
@@ -28,6 +30,7 @@ import Table, { Column, SortState } from '../components/ui/Table'
 import { fetchDelegationsPage } from '../api/delegations'
 import { fetchStats } from '../api/stats'
 import type { Delegation, StatsDelegations } from '../types'
+import { useDebounce } from '../hooks/useDebounce'
 import { usePagination } from '../hooks/usePagination'
 import { usePermissions } from '../hooks/usePermissions'
 
@@ -153,8 +156,16 @@ export default function Delegations() {
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [erreurAction, setErreurAction] = useState<string | null>(null)
 
+  // La frappe reste instantanée côté UI ; seule la requête est différée.
+  const rechercheDifferee = useDebounce(recherche, 350)
+
   const { page, setPage, pageSize } = usePagination({
-    resetDeps: [filtreActif, recherche, sortState?.key, sortState?.direction],
+    resetDeps: [
+      filtreActif,
+      rechercheDifferee,
+      sortState?.key,
+      sortState?.direction,
+    ],
   })
 
   // ---- Tri : 3 états (asc → desc → aucun) ----
@@ -179,12 +190,14 @@ export default function Delegations() {
       : triServeur
 
   // Source unique de vérité des filtres : partagée par la liste ET les KPI.
-  // `DelegationViewSet` n'expose que `actif` et `role_delegue`.
+  // `search` est aussi transmis aux KPI pour que les compteurs décrivent les
+  // lignes affichées.
   const filtres = useMemo(
     () => ({
       actif: filtreActif === '' ? undefined : filtreActif === 'true',
+      search: rechercheDifferee.trim() || undefined,
     }),
-    [filtreActif],
+    [filtreActif, rechercheDifferee],
   )
 
   const {
@@ -206,19 +219,9 @@ export default function Delegations() {
   const delegations = data?.results ?? []
   const total = data?.count ?? 0
 
-  // Le backend n'expose pas `search_fields` pour les délégations : cette
-  // recherche reste donc un filtre local sur la page courante.
-  const delegationsFiltrees = useMemo(() => {
-    if (!recherche.trim()) return delegations
-    const q = recherche.toLowerCase().trim()
-    return delegations.filter(
-      (d) =>
-        d.delegant_detail.nom_complet.toLowerCase().includes(q) ||
-        d.delegataire_detail.nom_complet.toLowerCase().includes(q) ||
-        d.role_delegue_display.toLowerCase().includes(q) ||
-        d.service?.toLowerCase().includes(q),
-    )
-  }, [delegations, recherche])
+// `search` est calculé par le serveur : le filtrer sur la page courante
+  // tronquerait le `count` et la pagination.
+  const delegationsFiltrees = delegations
 
   // ---- Tri ----
   // Seules les colonnes sans équivalent serveur (`delegant`, `delegataire`,

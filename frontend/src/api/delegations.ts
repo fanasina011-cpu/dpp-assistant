@@ -10,6 +10,11 @@ export interface FetchDelegationsParams {
   roleDelegue?: string
   /** Tri serveur : `date_creation`, `date_debut`, `date_fin` (préfixe `-` pour l'inverse). */
   ordering?: string
+  /**
+   * Recherche plein texte sur le nom du délégant, celui du délégataire, le
+   * rôle délégué et le service.
+   */
+  search?: string
   page?: number
   pageSize?: number
 }
@@ -24,6 +29,7 @@ export async function fetchDelegationsPage(
   if (params?.actif !== undefined) query.actif = String(params.actif)
   if (params?.roleDelegue) query.role_delegue = params.roleDelegue
   if (params?.ordering) query.ordering = params.ordering
+  if (params?.search) query.search = params.search
   if (params?.page) query.page = String(params.page)
   if (params?.pageSize) query.page_size = String(params.pageSize)
 

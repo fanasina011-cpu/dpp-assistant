@@ -19,6 +19,7 @@ from api.models import (
     Activite,
     Blocage,
     CompteRenduQuotidien,
+    Delegation,
     HistoriqueAction,
     Instruction,
     Notification,
@@ -307,6 +308,71 @@ class TestFiltresDate:
 
         assert response.status_code == 200
         assert response.data['count'] == 2
+
+    def test_mes_taches_couvre_creees_et_assignees(
+        self, client_chef_projets, chef_projets, directeur, conseillere,
+    ):
+        """
+        `mes_taches` = responsable OU createur.
+
+        `conseillere` n'a pas de service dans les fixtures : la tâche dont elle
+        est responsable n'entre PAS dans le périmètre du chef de service
+        (branche `responsable__service` du RBAC). Elle n'est visible que parce
+        qu'il l'a créée — c'est exactement ce que `mes_taches` doit ajouter.
+
+        Utiliser un membre ne prouverait rien : sa branche RBAC applique déjà
+        `Q(responsable=user) | Q(createur=user)`.
+        """
+        creee_par_moi = creer_tache(chef_projets, conseillere, 'Créée par moi')
+        assignee_a_moi = creer_tache(directeur, chef_projets, 'Assignée à moi')
+        etrangere = creer_tache(directeur, conseillere, 'Ni à moi ni par moi')
+
+        response = client_chef_projets.get('/api/v1/taches/?mes_taches=true')
+
+        assert response.status_code == 200
+        ids = {t['id'] for t in response.data['results']}
+        assert creee_par_moi.id in ids
+        assert assignee_a_moi.id in ids
+        assert etrangere.id not in ids
+        assert response.data['count'] == 2
+
+    def test_mes_taches_ne_contourne_pas_le_rbac(
+        self, client_membre, membre, directeur, conseillere,
+    ):
+        """Un membre ne voit pas une tâche qu'il n'a ni créée ni assignée."""
+        creer_tache(directeur, conseillere, 'Ni à moi ni par moi')
+
+        response = client_membre.get('/api/v1/taches/?mes_taches=true')
+
+        assert response.status_code == 200
+        assert response.data['count'] == 0
+
+    def test_mes_taches_absent_ne_filtre_pas(
+        self, client_chef_projets, chef_projets, directeur, conseillere,
+    ):
+        creer_tache(directeur, conseillere, 'Tâche hors périmètre')
+
+        response = client_chef_projets.get('/api/v1/taches/')
+
+        assert response.status_code == 200
+        assert response.data['count'] == 0
+
+    def test_mes_taches_vrai_pour_un_derniere_page(
+        self, client_chef_projets, chef_projets, directeur, conseillere,
+    ):
+        """
+        `count` et la pagination portent le filtre : une tâche créée par moi
+        mais assignée à un autre service est bien incluse dans le total.
+        """
+        for i in range(25):
+            creer_tache(chef_projets, conseillere, f'Créée {i}')
+
+        response = client_chef_projets.get(
+            '/api/v1/taches/?mes_taches=true&page_size=20',
+        )
+
+        assert response.data['count'] == 25
+        assert len(response.data['results']) == 20
 
     def test_periode_ne_contourne_pas_le_rbac(
         self, client_membre, membre, chef_projets,
@@ -911,6 +977,88 @@ class TestFiltreCategorieAction:
         )
 
         response = client_membre.get('/api/v1/historique/?categorie=CREATION')
+
+        assert response.status_code == 200
+        assert response.data['count'] == 0
+
+
+# ===========================================================================
+# RECHERCHE SUR DÉLÉGATION (promue côté serveur)
+# ===========================================================================
+
+@pytest.mark.django_db
+class TestRechercheDelegation:
+
+    @staticmethod
+    def _creer(delegant, delegataire, role='CHEF_SERVICE_PROJETS',
+               service='Projets'):
+        maintenant = timezone.now()
+        return Delegation.objects.create(
+            delegant=delegant,
+            delegataire=delegataire,
+            role_delegue=role,
+            service=service,
+            date_debut=maintenant,
+            date_fin=maintenant + timedelta(days=30),
+        )
+
+    def test_recherche_au_dela_de_la_premiere_page(
+        self, client_directeur, directeur, chef_projets, conseillere,
+    ):
+        """
+        Preuve que la recherche est calculée par le serveur : la cible est
+        hors de la page 1, elle ne peut donc pas venir d'un filtre local.
+        """
+        self._creer(directeur, chef_projets)
+        self._creer(directeur, chef_projets)
+        cible = self._creer(
+            directeur, conseillere, role='CONSEILLERE_TECHNIQUE',
+            service='Technique',
+        )
+
+        sans_recherche = client_directeur.get(
+            '/api/v1/delegations/?page_size=1&ordering=date_creation',
+        )
+        assert sans_recherche.data['count'] == 3
+        assert sans_recherche.data['results'][0]['id'] != cible.id
+
+        avec_recherche = client_directeur.get(
+            '/api/v1/delegations/?page_size=1&search=Conseillere',
+        )
+        assert avec_recherche.data['count'] == 1
+        assert avec_recherche.data['results'][0]['id'] == cible.id
+
+    def test_recherche_par_role_et_service(self, client_directeur, directeur, chef_projets):
+        self._creer(directeur, chef_projets)
+        cible = self._creer(
+            directeur, chef_projets, role='CONSEILLERE_TECHNIQUE',
+            service='Technique',
+        )
+
+        par_role = client_directeur.get(
+            '/api/v1/delegations/?search=CONSEILLERE_TECHNIQUE',
+        )
+        assert par_role.data['count'] == 1
+        assert par_role.data['results'][0]['id'] == cible.id
+
+        par_service = client_directeur.get(
+            '/api/v1/delegations/?search=Technique',
+        )
+        assert par_service.data['count'] == 1
+        assert par_service.data['results'][0]['id'] == cible.id
+
+    def test_recherche_ne_contourne_pas_le_rbac(
+        self, client_membre, membre, directeur, conseillere,
+    ):
+        """
+        `search_fields` introduit deux JOIN là où il n'y en avait aucun : le
+        RBAC doit rester étanche.
+        """
+        self._creer(directeur, conseillere, service='Technique')
+
+        response = client_membre.get(
+            '/api/v1/delegations/?search=Conseillere',
+        )
 
         assert response.status_code == 200
         assert response.data['count'] == 0

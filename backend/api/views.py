@@ -407,6 +407,17 @@ class TacheViewSet(viewsets.ModelViewSet):
         if responsable:
             qs = qs.filter(responsable_id=responsable)
 
+        # `mes_taches=true` : les tâches dont l'utilisateur est responsable
+        # OU qu'il a créées — la branche « membre » du RBAC applique déjà
+        # cette condition, mais pas celle du chef de service ni du directeur.
+        #
+        # ANDé avec le RBAC : ne peut donc que restreindre, jamais élargir.
+        # `.distinct()` inutile : les deux branches sont des égalités sur des
+        # clés étrangères directes de la même ligne, le WHERE ne multiplie pas
+        # les lignes (contrairement à un JOIN sur relation inverse).
+        if self.request.query_params.get('mes_taches') == 'true':
+            qs = qs.filter(Q(responsable=user) | Q(createur=user))
+
         activite = self.request.query_params.get('activite')
         if activite:
             qs = qs.filter(activite_id=activite)
@@ -2124,6 +2135,15 @@ class DelegationViewSet(viewsets.ModelViewSet):
     # arbitraire. `delegant`/`delegataire` : colonnes jointes incompatibles
     # avec le .distinct() du RBAC (voir l'en-tête du module).
     ordering_fields = ['date_creation', 'date_debut', 'date_fin']
+    # `delegant` et `delegataire` sont des FK directes (many-to-one) : le JOIN
+    # ne multiplie pas les lignes, le `.distinct()` du RBAC reste valide —
+    # même règle que pour les autres `search_fields` (en-tête du module).
+    # `role_delegue` et `service` sont des CharField locaux.
+    search_fields = [
+        'delegant__last_name', 'delegant__first_name',
+        'delegataire__last_name', 'delegataire__first_name',
+        'role_delegue', 'service',
+    ]
 
     def get_queryset(self):
         """

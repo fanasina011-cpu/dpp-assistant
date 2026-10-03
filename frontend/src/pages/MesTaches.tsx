@@ -1,6 +1,6 @@
 /**
- * Page "Mes tâches" v6 — tâches dont JE suis le responsable.
- * Même design que /taches, mais filtré strictement sur responsable = moi.
+ * Page "Mes tâches" v6 — tâches dont je suis responsable ou que j'ai créées.
+ * Même design que /taches, mais filtré via `?mes_taches=true`.
  * Tri, recherche, filtres et KPI côté serveur (même socle que Taches).
  */
 
@@ -256,10 +256,13 @@ export default function MesTaches() {
 
   // Source unique de vérité des filtres : partagée par la liste ET les KPI,
   // pour que les compteurs affichés correspondent toujours aux lignes.
-  // `responsable` restreint la page aux tâches dont JE suis le responsable.
+  // `mesTaches` restreint la page aux tâches dont je suis responsable ou que
+  // j'ai créées.
   const filtres = useMemo(
     () => ({
-      responsable: user?.id,
+      // Couvre les tâches assignées ET celles que j'ai créées : un simple
+      // `?responsable=<id>` exclurait les secondes.
+      mesTaches: true,
       statut: statutFiltre || undefined,
       priorite: prioriteFiltre || undefined,
       search: rechercheDifferee.trim() || undefined,
@@ -268,7 +271,6 @@ export default function MesTaches() {
       sansDate: echeanceFiltre === 'sans_date' ? true : undefined,
     }),
     [
-      user?.id,
       statutFiltre,
       prioriteFiltre,
       rechercheDifferee,
