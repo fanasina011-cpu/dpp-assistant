@@ -1,0 +1,151 @@
+@import "tailwindcss";
+
+/* =========================================================
+   DESIGN SYSTEM v2 — Tokens
+   Style : minimaliste sobre type Linear
+   Police : Inter
+   Palette : indigo profond + neutres gris froid
+   ========================================================= */
+
+/* Charger Inter depuis Google Fonts */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+@theme {
+  /* ----- Typographie ----- */
+  --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+
+  /* ----- Couleurs de marque (indigo profond) ----- */
+  --color-brand-50: #f0f1fb;
+  --color-brand-100: #e5e7f8;
+  --color-brand-200: #d0d4f2;
+  --color-brand-300: #b0b6e8;
+  --color-brand-400: #8b93db;
+  --color-brand-500: #5b5bd6;
+  --color-brand-600: #4f4fc7;
+  --color-brand-700: #4040a8;
+  --color-brand-800: #363688;
+  --color-brand-900: #2f2f6e;
+
+  /* ----- Neutres (gris froid, style zinc) ----- */
+  --color-ink-50: #fafafa;
+  --color-ink-100: #f4f4f5;
+  --color-ink-200: #e4e4e7;
+  --color-ink-300: #d4d4d8;
+  --color-ink-400: #a1a1aa;
+  --color-ink-500: #71717a;
+  --color-ink-600: #52525b;
+  --color-ink-700: #3f3f46;
+  --color-ink-800: #27272a;
+  --color-ink-900: #18181b;
+
+  /* ----- Sémantiques ----- */
+  --color-success: #16a34a;
+  --color-success-bg: #f0fdf4;
+  --color-success-border: #bbf7d0;
+
+  --color-warning: #d97706;
+  --color-warning-bg: #fffbeb;
+  --color-warning-border: #fde68a;
+
+  --color-danger: #dc2626;
+  --color-danger-bg: #fef2f2;
+  --color-danger-border: #fecaca;
+
+  --color-info: #0284c7;
+  --color-info-bg: #f0f9ff;
+  --color-info-border: #bae6fd;
+}
+
+/* =========================================================
+   BASE
+   ========================================================= */
+
+html {
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
+}
+
+body {
+  background-color: var(--color-ink-50);
+  color: var(--color-ink-900);
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+/* Scrollbar discrète */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--color-ink-300);
+  border-radius: 5px;
+  border: 2px solid var(--color-ink-50);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-ink-400);
+}
+
+/* Focus ring global cohérent */
+*:focus-visible {
+  outline: 2px solid var(--color-brand-500);
+  outline-offset: 1px;
+  border-radius: 4px;
+}
+
+/* =========================================================
+   ANIMATIONS — NotificationBell
+   ========================================================= */
+
+/* Secousse de la cloche */
+@keyframes shake {
+  0%, 100% { transform: rotate(0deg); }
+  10% { transform: rotate(-12deg); }
+  20% { transform: rotate(10deg); }
+  30% { transform: rotate(-8deg); }
+  40% { transform: rotate(6deg); }
+  50% { transform: rotate(-4deg); }
+  60% { transform: rotate(2deg); }
+  70% { transform: rotate(-1deg); }
+  80%, 90% { transform: rotate(0deg); }
+}
+
+.animate-shake {
+  animation: shake 0.6s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
+}
+/* Ouverture du sous-menu (fade-in subtile) */
+@keyframes slide-in-from-top-1 {
+  from {
+    opacity: 0;
+    transform: translateY(-2px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+
+/* Pulsation du badge */
+@keyframes pulse-badge {
+  0%, 100% {
+    transform: scale(1);
+    box-shadow: 0 0 0 0 rgba(220, 38, 38, 0.6);
+  }
+  50% {
+    transform: scale(1.1);
+    box-shadow: 0 0 0 4px rgba(220, 38, 38, 0);
+  }
+}
+
+.animate-pulse-badge {
+  animation: pulse-badge 0.8s ease-out;
+}

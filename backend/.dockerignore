@@ -1,0 +1,28 @@
+# Environnement virtuel local
+venv/
+.venv/
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Django
+media/
+staticfiles/
+db.sqlite3
+
+# Variables d'environnement locales
+.env
+
+# Git
+.git/
+.gitignore
+
+# IDE
+.vscode/
+.idea/
+*.swp

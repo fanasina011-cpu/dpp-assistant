@@ -1,0 +1,88 @@
+# =========================================================
+# Python / Django
+# =========================================================
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+
+# Environnements virtuels
+venv/
+.venv/
+env/
+ENV/
+
+# Tests / couverture
+.pytest_cache/
+.coverage
+.coverage.*
+htmlcov/
+coverage.xml
+*.cover
+
+# Django — runtime
+*.log
+db.sqlite3
+db.sqlite3-journal
+media/
+staticfiles/
+
+# Variables d'environnement (JAMAIS versionnées)
+.env
+.env.local
+.env.*.local
+!.env.example
+
+# =========================================================
+# Node / React / Vite (le .gitignore de frontend/ couvre le reste)
+# =========================================================
+node_modules/
+dist/
+dist-ssr/
+.vite/
+*.tsbuildinfo
+.eslintcache
+
+# =========================================================
+# IDE / Éditeurs
+# =========================================================
+.vscode/*
+!.vscode/settings.json
+!.vscode/extensions.json
+.idea/
+*.swp
+*.swo
+*~
+
+# =========================================================
+# OS
+# =========================================================
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# =========================================================
+# Outils internes
+# =========================================================
+.kilo/
+
+# =========================================================
+# Backups locaux (les dumps SQL ne vont pas dans git)
+# =========================================================
+backups/*.sql.gz
+backups/*.sql
+backups/*.tar.gz
+backups/*.zip
+
+# =========================================================
+# Artefacts système (accidentels)
+# =========================================================
+/query
+frontend/query
+
+# =========================================================
+# Divers
+# =========================================================
+*.bak
+*.tmp

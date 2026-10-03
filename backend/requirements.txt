@@ -1,0 +1,38 @@
+# ============================================================================
+# DPP Assistant — Backend
+# Environnement Python 3.14.5 / Django 5.2.17 LTS
+# ============================================================================
+#
+# Installation :
+#     python -m venv venv
+#     .\venv\Scripts\Activate.ps1
+#     pip install -r requirements.txt
+#
+# ============================================================================
+
+# --- Framework web ---
+Django==5.2.17
+
+# --- API REST ---
+djangorestframework==3.18.1
+djangorestframework_simplejwt==5.5.1
+# --- Documentation API ---
+drf-spectacular==0.30.0
+
+# --- Base de données MySQL ---
+mysqlclient==2.3.0
+
+# --- CORS (communication frontend ↔ backend) ---
+django-cors-headers==4.9.0
+
+# --- Gestion des variables d'environnement ---
+python-dotenv==1.2.3
+
+# --- Dépendances internes (transitives) ---
+asgiref==3.12.1
+sqlparse==0.6.0
+PyJWT==2.14.0
+tzdata==2026.4
+
+# --- Serveur de production ---
+gunicorn==23.0.0
