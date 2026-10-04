@@ -15,7 +15,7 @@ $MySQLBin = "C:\Program Files\MySQL\MySQL Server 8.0\bin"
 $DBUser = "root"
 $DBPassword = "DppRoot2026!"
 $DBName = "dpp_assistant"
-$DBPort = "3307"
+$DBPort = "3308"
 $DBHost = "127.0.0.1"
 
 # --- Dossier de sauvegardes ---

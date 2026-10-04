@@ -36,3 +36,7 @@ tzdata==2026.4
 
 # --- Serveur de production ---
 gunicorn==23.0.0
+
+# --- File d'attente (Celery + Redis) ---
+celery==5.5.0
+redis==5.2.0

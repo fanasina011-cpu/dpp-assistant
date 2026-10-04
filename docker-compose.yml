@@ -11,11 +11,28 @@
 # Accès :
 #     Frontend : http://localhost:5173
 #     Backend  : http://localhost:8000
-#     MySQL    : localhost:3307
+#     MySQL    : localhost:3308
 #
 # ============================================================================
 
 services:
+
+  # --------------------------------------------------------------------------
+  # Redis — broker pour Celery
+  # --------------------------------------------------------------------------
+  redis:
+    image: redis:7-alpine
+    container_name: dpp_redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - dpp_redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
   # --------------------------------------------------------------------------
   # MySQL 8.0
   # --------------------------------------------------------------------------
@@ -29,7 +46,7 @@ services:
       MYSQL_USER: dpp_user
       MYSQL_PASSWORD: dpp_password_dev
     ports:
-      - "3307:3306"
+      - "3308:3306"
     volumes:
       - dpp_mysql_data:/var/lib/mysql
     command:
@@ -41,6 +58,7 @@ services:
       timeout: 5s
       retries: 10
       start_period: 300s
+
 
   # --------------------------------------------------------------------------
   # Backend Django
@@ -72,6 +90,70 @@ services:
       - dpp_media:/app/media
 
   # --------------------------------------------------------------------------
+  # Celery Worker — exécute les jobs en arrière-plan
+  # --------------------------------------------------------------------------
+  celery-worker:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: dpp_celery_worker
+    restart: unless-stopped
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      DJANGO_SECRET_KEY: docker_dev_secret_key_change_in_prod
+      DJANGO_DEBUG: "True"
+      DJANGO_ALLOWED_HOSTS: localhost,127.0.0.1,backend
+
+      DB_NAME: dpp_assistant
+      DB_USER: dpp_user
+      DB_PASSWORD: dpp_password_dev
+      DB_HOST: mysql
+      DB_PORT: "3306"
+
+      CELERY_BROKER_URL: redis://redis:6379/0
+      CELERY_RESULT_BACKEND: redis://redis:6379/0
+    entrypoint: []
+    command: celery -A core worker -l info
+    volumes:
+      - dpp_media:/app/media
+
+  # --------------------------------------------------------------------------
+  # Celery Beat — planificateur (lance les jobs selon un planning)
+  # --------------------------------------------------------------------------
+  celery-beat:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: dpp_celery_beat
+    restart: unless-stopped
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      DJANGO_SECRET_KEY: docker_dev_secret_key_change_in_prod
+      DJANGO_DEBUG: "True"
+      DJANGO_ALLOWED_HOSTS: localhost,127.0.0.1,backend
+
+      DB_NAME: dpp_assistant
+      DB_USER: dpp_user
+      DB_PASSWORD: dpp_password_dev
+      DB_HOST: mysql
+      DB_PORT: "3306"
+
+      CELERY_BROKER_URL: redis://redis:6379/0
+      CELERY_RESULT_BACKEND: redis://redis:6379/0
+    entrypoint: []
+    command: celery -A core beat -l info
+    volumes:
+      - dpp_media:/app/media
+
+  # --------------------------------------------------------------------------
   # Frontend React + Nginx
   # --------------------------------------------------------------------------
   frontend:
@@ -90,3 +172,5 @@ volumes:
     name: dpp_mysql_data
   dpp_media:
     name: dpp_media
+  dpp_redis_data:
+    name: dpp_redis_data
