@@ -1,7 +1,7 @@
 /**
  * Tableau standardisé v5 — header collant + vue cards sur mobile.
  *
- * Sur desktop (≥ 768px) : tableau classique.
+ * Sur desktop (>= 768px) : tableau classique.
  * Sur mobile (< 768px) et si `renderCard` est fourni : liste de cards.
  */
 
@@ -118,90 +118,88 @@ export default function Table<T>({
   // MODE DESKTOP — Tableau
   // ============================================================
   return (
-    <div className="overflow-hidden">
-      <div className="overflow-y-auto" style={{ maxHeight }}>
-        <table className="w-full">
-          <thead className="bg-ink-50/60 border-b border-ink-200 sticky top-0 z-[1] backdrop-blur-sm">
-            <tr>
-              {columns.map((col) => {
-                const clickable = col.sortable && onSort
-                return (
-                  <th
-                    key={col.key}
-                    className={`
-                      px-4 py-2 text-[11px] font-semibold text-ink-500
-                      uppercase tracking-wider ${alignClass(col.align)}
-                    `}
-                    style={col.width ? { width: col.width } : undefined}
-                  >
-                    {clickable ? (
-                      <button
-                        type="button"
-                        onClick={() => onSort(col.key)}
-                        className={`
-                          group inline-flex items-center gap-1.5 select-none
-                          transition-colors hover:text-ink-800
-                          ${col.align === 'right' ? 'flex-row-reverse' : ''}
-                        `}
-                      >
-                        <span>{col.label}</span>
-                        {renderSortIcon(col)}
-                      </button>
-                    ) : (
-                      col.label
-                    )}
-                  </th>
-                )
-              })}
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-ink-100">
-            {isLoading ? (
-              Array.from({ length: 4 }).map((_, i) => (
-                <tr key={i}>
-                  {columns.map((col) => (
-                    <td key={col.key} className="px-4 py-2">
-                      <div
-                        className="h-3.5 bg-ink-100 rounded animate-pulse"
-                        style={{ width: `${60 + Math.random() * 40}%` }}
-                      />
-                    </td>
-                  ))}
-                </tr>
-              ))
-            ) : rows.length === 0 ? (
-              <tr>
-                <td colSpan={columns.length} className="px-4 py-12 text-center">
-                  <div className="flex flex-col items-center gap-2 text-ink-400">
-                    {emptyIcon && (
-                      <div className="text-ink-300 mb-1">{emptyIcon}</div>
-                    )}
-                    <p className="text-sm">{emptyMessage}</p>
-                  </div>
-                </td>
+    <div className="overflow-auto md:max-h-[70vh]" style={{ maxHeight }}>
+      <table className="w-full min-w-full">
+        <thead className="bg-ink-50/60 border-b border-ink-200 sticky top-0 z-[1] backdrop-blur-sm">
+          <tr>
+            {columns.map((col) => {
+              const clickable = col.sortable && onSort
+              return (
+                <th
+                  key={col.key}
+                  className={`
+                    px-4 py-2 text-[11px] font-semibold text-ink-500
+                    uppercase tracking-wider ${alignClass(col.align)}
+                  `}
+                  style={col.width ? { width: col.width } : undefined}
+                >
+                  {clickable ? (
+                    <button
+                      type="button"
+                      onClick={() => onSort(col.key)}
+                      className={`
+                        group inline-flex items-center gap-1.5 select-none
+                        transition-colors hover:text-ink-800
+                        ${col.align === 'right' ? 'flex-row-reverse' : ''}
+                      `}
+                    >
+                      <span>{col.label}</span>
+                      {renderSortIcon(col)}
+                    </button>
+                  ) : (
+                    col.label
+                  )}
+                </th>
+              )
+            })}
+          </tr>
+        </thead>
+        <tbody className="divide-y divide-ink-100">
+          {isLoading ? (
+            Array.from({ length: 4 }).map((_, i) => (
+              <tr key={i}>
+                {columns.map((col) => (
+                  <td key={col.key} className="px-4 py-2">
+                    <div
+                      className="h-3.5 bg-ink-100 rounded animate-pulse"
+                      style={{ width: `${60 + Math.random() * 40}%` }}
+                    />
+                  </td>
+                ))}
               </tr>
-            ) : (
-              rows.map((row, index) => {
-                const isHovered = hoveredIndex === index
-                return (
-                  <tr
-                    key={rowKey(row, index)}
-                    onMouseEnter={() => setHoveredIndex(index)}
-                    onMouseLeave={() => setHoveredIndex(null)}
-                    className={`
-                      align-middle transition-colors
-                      ${index % 2 === 1 ? 'bg-ink-50/30' : 'bg-white'}
-                      hover:bg-brand-50/40
-                    `}
-                  >
-                    {renderRow(row, index, isHovered)}
-                  </tr>
-                )
-              })
-            )}
-          </tbody>
-        </table>
-      </div>
+            ))
+          ) : rows.length === 0 ? (
+            <tr>
+              <td colSpan={columns.length} className="px-4 py-12 text-center">
+                <div className="flex flex-col items-center gap-2 text-ink-400">
+                  {emptyIcon && (
+                    <div className="text-ink-300 mb-1">{emptyIcon}</div>
+                  )}
+                  <p className="text-sm">{emptyMessage}</p>
+                </div>
+              </td>
+            </tr>
+          ) : (
+            rows.map((row, index) => {
+              const isHovered = hoveredIndex === index
+              return (
+                <tr
+                  key={rowKey(row, index)}
+                  onMouseEnter={() => setHoveredIndex(index)}
+                  onMouseLeave={() => setHoveredIndex(null)}
+                  className={`
+                    align-middle transition-colors
+                    ${index % 2 === 1 ? 'bg-ink-50/30' : 'bg-white'}
+                    hover:bg-brand-50/40
+                  `}
+                >
+                  {renderRow(row, index, isHovered)}
+                </tr>
+              )
+            })
+          )}
+        </tbody>
+      </table>
     </div>
   )
 }

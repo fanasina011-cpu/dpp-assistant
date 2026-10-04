@@ -28,21 +28,21 @@ const Select = forwardRef<HTMLSelectElement, SelectProps>(
           ref={ref}
           id={selectId}
           {...rest}
-          className={`
+            className={`
             w-full px-3 py-2 border rounded-md text-sm bg-white
             focus:outline-none focus:ring-2 transition-colors
             ${
               error
-                ? 'border-red-300 focus:ring-red-500 focus:border-red-400'
-                : 'border-slate-300 focus:ring-blue-500 focus:border-blue-400'
+                ? 'border-danger-border focus:ring-danger focus:border-danger'
+                : 'border-ink-300 focus:ring-brand-500 focus:border-brand-400'
             }
-            disabled:bg-slate-50 disabled:text-slate-500
+            disabled:bg-ink-50 disabled:text-ink-500
             ${className}
           `}
         >
           {children}
         </select>
-        {error && <p className="text-xs text-red-600 mt-1">{error}</p>}
+        {error && <p className="text-xs text-danger mt-1">{error}</p>}
       </div>
     )
   },

@@ -15,7 +15,7 @@ export default function Layout({ title, children }: LayoutProps) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false)
 
   return (
-    <div className="h-screen flex bg-ink-50">
+    <div className="h-dvh flex bg-ink-50">
       <Sidebar
         isOpen={isSidebarOpen}
         onClose={() => setIsSidebarOpen(false)}

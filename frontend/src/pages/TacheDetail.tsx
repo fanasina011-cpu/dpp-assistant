@@ -559,7 +559,7 @@ export default function TacheDetail() {
                       type="button"
                       onClick={() => detacherMutation.mutate()}
                       disabled={detacherMutation.isPending}
-                      className="shrink-0 w-7 h-7 flex items-center justify-center rounded text-ink-300 hover:text-danger hover:bg-danger-bg transition-colors opacity-0 group-hover:opacity-100 disabled:opacity-50"
+                      className="shrink-0 w-7 h-7 flex items-center justify-center rounded text-ink-300 hover:text-danger hover:bg-danger-bg transition-colors opacity-100 md:opacity-0 md:group-hover:opacity-100 disabled:opacity-50"
                       aria-label="Retirer de l'activité"
                       title="Retirer de l'activité"
                     >
