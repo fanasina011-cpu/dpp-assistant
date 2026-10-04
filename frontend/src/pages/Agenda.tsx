@@ -19,6 +19,7 @@ import JourPanel from '../components/agenda/JourPanel'
 import MiniCalendrier from '../components/agenda/MiniCalendrier'
 import EvenementFormModal from '../components/agenda/EvenementFormModal'
 import EvenementDetailModal from '../components/agenda/EvenementDetailModal'
+import ErrorState from '../components/ui/ErrorState'
 import Button from '../components/ui/Button'
 import {
   NOMS_MOIS,
@@ -95,7 +96,7 @@ export default function Agenda() {
     }
   }, [vue, dateRef])
 
-  const { data: evenements = [] } = useQuery({
+  const { data: evenements = [], isLoading, error, refetch } = useQuery({
     queryKey: ['evenements', debut, fin],
     queryFn: () => fetchEvenements({ debut, fin }),
   })
@@ -230,80 +231,91 @@ export default function Agenda() {
           </Button>
         </div>
 
-        {/* Contenu */}
-        {vue === 'jour' && (
-          <VueJour
-            date={dateRef}
-            evenements={evenements}
-            onEvenementClick={setSelectedEvenement}
-          />
-        )}
-
-        {vue === 'semaine' && (
-          <div className="grid grid-cols-1 lg:grid-cols-[220px_minmax(0,1fr)] gap-4">
-            <MiniCalendrier
-              annee={dateRef.getFullYear()}
-              mois={dateRef.getMonth()}
-              selectedDate={dateRef}
-              evenements={evenements}
-              onJourClick={setDateRef}
-              onMoisChange={(a, m) => {
-                const d = new Date(dateRef)
-                d.setFullYear(a)
-                d.setMonth(m)
-                setDateRef(d)
-              }}
-            />
-            <VueSemaine
-              dateReference={dateRef}
-              evenements={evenements}
-              onEvenementClick={setSelectedEvenement}
-              onJourClick={(d) => {
-                setDateRef(d)
-                setVue('jour')
-              }}
-              onSlotClick={(d) => openForm(d)}
-            />
+        {/* États de chargement / erreur */}
+        {isLoading ? (
+          <div className="space-y-4">
+            <div className="h-64 bg-ink-100 rounded-lg animate-pulse" />
+            <div className="h-64 bg-ink-100 rounded-lg animate-pulse" />
           </div>
-        )}
+        ) : error ? (
+          <ErrorState error={error} onRetry={() => refetch()} />
+        ) : (
+          <>
+            {vue === 'jour' && (
+              <VueJour
+                date={dateRef}
+                evenements={evenements}
+                onEvenementClick={setSelectedEvenement}
+              />
+            )}
 
-        {vue === 'mois' && (
-          <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_320px] gap-4">
-            <VueMois
-              annee={dateRef.getFullYear()}
-              mois={dateRef.getMonth()}
-              evenements={evenements}
-              selectedDate={dateRef}
-              onJourClick={setDateRef}
-            />
-            <JourPanel
-              date={dateRef}
-              evenements={evenementsJour}
-              onEvenementClick={setSelectedEvenement}
-            />
-          </div>
-        )}
+            {vue === 'semaine' && (
+              <div className="grid grid-cols-1 lg:grid-cols-[220px_minmax(0,1fr)] gap-4">
+                <MiniCalendrier
+                  annee={dateRef.getFullYear()}
+                  mois={dateRef.getMonth()}
+                  selectedDate={dateRef}
+                  evenements={evenements}
+                  onJourClick={setDateRef}
+                  onMoisChange={(a, m) => {
+                    const d = new Date(dateRef)
+                    d.setFullYear(a)
+                    d.setMonth(m)
+                    setDateRef(d)
+                  }}
+                />
+                <VueSemaine
+                  dateReference={dateRef}
+                  evenements={evenements}
+                  onEvenementClick={setSelectedEvenement}
+                  onJourClick={(d) => {
+                    setDateRef(d)
+                    setVue('jour')
+                  }}
+                  onSlotClick={(d) => openForm(d)}
+                />
+              </div>
+            )}
 
-        {vue === 'liste' && (
-          <div className="grid grid-cols-1 lg:grid-cols-[220px_minmax(0,1fr)] gap-4">
-            <MiniCalendrier
-              annee={dateRef.getFullYear()}
-              mois={dateRef.getMonth()}
-              selectedDate={dateRef}
-              evenements={evenements}
-              onJourClick={setDateRef}
-              onMoisChange={(a, m) => {
-                const d = new Date(dateRef)
-                d.setFullYear(a)
-                d.setMonth(m)
-                setDateRef(d)
-              }}
-            />
-            <VueListe
-              evenements={evenements}
-              onEvenementClick={setSelectedEvenement}
-            />
-          </div>
+            {vue === 'mois' && (
+              <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_320px] gap-4">
+                <VueMois
+                  annee={dateRef.getFullYear()}
+                  mois={dateRef.getMonth()}
+                  evenements={evenements}
+                  selectedDate={dateRef}
+                  onJourClick={setDateRef}
+                />
+                <JourPanel
+                  date={dateRef}
+                  evenements={evenementsJour}
+                  onEvenementClick={setSelectedEvenement}
+                />
+              </div>
+            )}
+
+            {vue === 'liste' && (
+              <div className="grid grid-cols-1 lg:grid-cols-[220px_minmax(0,1fr)] gap-4">
+                <MiniCalendrier
+                  annee={dateRef.getFullYear()}
+                  mois={dateRef.getMonth()}
+                  selectedDate={dateRef}
+                  evenements={evenements}
+                  onJourClick={setDateRef}
+                  onMoisChange={(a, m) => {
+                    const d = new Date(dateRef)
+                    d.setFullYear(a)
+                    d.setMonth(m)
+                    setDateRef(d)
+                  }}
+                />
+                <VueListe
+                  evenements={evenements}
+                  onEvenementClick={setSelectedEvenement}
+                />
+              </div>
+            )}
+          </>
         )}
       </div>
 
