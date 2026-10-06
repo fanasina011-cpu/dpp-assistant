@@ -25,11 +25,18 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # Sécurité
 # ---------------------------------------------------------------------------
 
-SECRET_KEY = os.getenv('DJANGO_SECRET_KEY', 'fallback-insecure-key')
-
 DEBUG = os.getenv('DJANGO_DEBUG', 'False') == 'True'
 
 ALLOWED_HOSTS = os.getenv('DJANGO_ALLOWED_HOSTS', 'localhost').split(',')
+
+SECRET_KEY = os.getenv('DJANGO_SECRET_KEY')
+if not SECRET_KEY:
+    if DEBUG:
+        SECRET_KEY = 'insecure-dev-fallback-not-for-prod'
+    else:
+        raise RuntimeError(
+            'DJANGO_SECRET_KEY est requis en production.'
+        )
 
 
 # ---------------------------------------------------------------------------
@@ -230,3 +237,29 @@ CELERY_TIMEZONE = TIME_ZONE
 CELERY_TASK_TRACK_STARTED = True
 CELERY_TASK_TIME_LIMIT = 30 * 60
 CELERY_BROKER_CONNECTION_RETRY_ON_STARTUP = True
+
+
+# ---------------------------------------------------------------------------
+# Garde-fous production (ALLOWED_HOSTS / CORS)
+# ---------------------------------------------------------------------------
+if not DEBUG:
+    if not ALLOWED_HOSTS or ALLOWED_HOSTS == ['']:
+        raise RuntimeError(
+            'DJANGO_ALLOWED_HOSTS doit être défini en production.'
+        )
+
+    if CORS_ALLOWED_ORIGINS == ['']:
+        CORS_ALLOWED_ORIGINS = []
+
+    # HTTPS / HSTS / cookies sécurisés
+    SECURE_SSL_REDIRECT = True
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
+    SECURE_HSTS_SECONDS = 31536000
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+    SECURE_HSTS_PRELOAD = True
+    SECURE_CONTENT_TYPE_NOSNIFF = True
+    SECURE_BROWSER_XSS_FILTER = True
+
+    # Nginx termine le TLS → signaler à Django que la requête est HTTPS
+    SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')

@@ -1,0 +1,191 @@
+# ============================================================================
+# DPP Assistant — Orchestration Docker (production)
+# ============================================================================
+#
+# Usage :
+#     docker compose -f docker-compose.prod.yml build
+#     docker compose -f docker-compose.prod.yml up -d
+#     docker compose -f docker-compose.prod.yml down
+#
+# Accès (via nginx) :
+#     Frontend : http://<DOMAINE>
+#     Backend  : http://<DOMAINE>/api/v1/
+#     Admin    : http://<DOMAINE>/admin/
+#
+# Variables :
+#     Copier .env.prod.example vers .env.prod et remplir les valeurs.
+#
+# ============================================================================
+
+services:
+
+  # --------------------------------------------------------------------------
+  # Redis — broker pour Celery (avec mot de passe)
+  # --------------------------------------------------------------------------
+  redis:
+    image: redis:7-alpine
+    container_name: dpp_redis
+    restart: unless-stopped
+    command: redis-server --requirepass ${REDIS_PASSWORD}
+    volumes:
+      - dpp_redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+  # --------------------------------------------------------------------------
+  # MySQL 8.0 (pas de port exposé)
+  # --------------------------------------------------------------------------
+  mysql:
+    image: mysql:8.0
+    container_name: dpp_mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: dpp_assistant
+      MYSQL_USER: dpp_user
+      MYSQL_PASSWORD: ${DB_PASSWORD}
+    volumes:
+      - dpp_mysql_data:/var/lib/mysql
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-u", "root", "-p${MYSQL_ROOT_PASSWORD}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 300s
+
+  # --------------------------------------------------------------------------
+  # Backend Django (Gunicorn, pas de port exposé)
+  # --------------------------------------------------------------------------
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: dpp_backend
+    restart: unless-stopped
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      DJANGO_SECRET_KEY: ${DJANGO_SECRET_KEY}
+      DJANGO_DEBUG: "False"
+      DJANGO_ALLOWED_HOSTS: ${DJANGO_ALLOWED_HOSTS}
+      DB_NAME: dpp_assistant
+      DB_USER: dpp_user
+      DB_PASSWORD: ${DB_PASSWORD}
+      DB_HOST: mysql
+      DB_PORT: "3306"
+      CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS}
+      CELERY_BROKER_URL: redis://:${REDIS_PASSWORD}@redis:6379/0
+      CELERY_RESULT_BACKEND: redis://:${REDIS_PASSWORD}@redis:6379/0
+    volumes:
+      - dpp_media:/app/media
+      - dpp_staticfiles:/app/staticfiles
+
+  # --------------------------------------------------------------------------
+  # Celery Worker
+  # --------------------------------------------------------------------------
+  celery-worker:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: dpp_celery_worker
+    restart: unless-stopped
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      DJANGO_SECRET_KEY: ${DJANGO_SECRET_KEY}
+      DJANGO_DEBUG: "False"
+      DJANGO_ALLOWED_HOSTS: ${DJANGO_ALLOWED_HOSTS}
+      DB_NAME: dpp_assistant
+      DB_USER: dpp_user
+      DB_PASSWORD: ${DB_PASSWORD}
+      DB_HOST: mysql
+      DB_PORT: "3306"
+      CELERY_BROKER_URL: redis://:${REDIS_PASSWORD}@redis:6379/0
+      CELERY_RESULT_BACKEND: redis://:${REDIS_PASSWORD}@redis:6379/0
+    entrypoint: []
+    command: celery -A core worker -l info
+    volumes:
+      - dpp_media:/app/media
+
+  # --------------------------------------------------------------------------
+  # Celery Beat
+  # --------------------------------------------------------------------------
+  celery-beat:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: dpp_celery_beat
+    restart: unless-stopped
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      DJANGO_SECRET_KEY: ${DJANGO_SECRET_KEY}
+      DJANGO_DEBUG: "False"
+      DJANGO_ALLOWED_HOSTS: ${DJANGO_ALLOWED_HOSTS}
+      DB_NAME: dpp_assistant
+      DB_USER: dpp_user
+      DB_PASSWORD: ${DB_PASSWORD}
+      DB_HOST: mysql
+      DB_PORT: "3306"
+      CELERY_BROKER_URL: redis://:${REDIS_PASSWORD}@redis:6379/0
+      CELERY_RESULT_BACKEND: redis://:${REDIS_PASSWORD}@redis:6379/0
+    entrypoint: []
+    command: celery -A core beat -l info
+    volumes:
+      - dpp_media:/app/media
+
+  # --------------------------------------------------------------------------
+  # Frontend React + Nginx (pas de port exposé)
+  # --------------------------------------------------------------------------
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        VITE_API_URL: ${VITE_API_URL}
+    container_name: dpp_frontend
+    restart: unless-stopped
+    depends_on:
+      - backend
+
+  # --------------------------------------------------------------------------
+  # Nginx — reverse proxy unique exposé
+  # --------------------------------------------------------------------------
+  nginx:
+    image: nginx:alpine
+    container_name: dpp_nginx
+    restart: unless-stopped
+    depends_on:
+      - frontend
+      - backend
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx.prod.conf:/etc/nginx/conf.d/default.conf:ro
+      - dpp_staticfiles:/app/staticfiles:ro
+      - dpp_media:/app/media:ro
+
+volumes:
+  dpp_mysql_data:
+    name: dpp_mysql_data
+  dpp_media:
+    name: dpp_media
+  dpp_redis_data:
+    name: dpp_redis_data
+  dpp_staticfiles:
+    name: dpp_staticfiles

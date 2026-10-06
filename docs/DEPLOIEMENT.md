@@ -368,27 +368,202 @@ Mainteneur : <NOM_ET_EMAIL>
 
 Fin du guide de déploiement.
 
-text
+---
 
-**Enregistrez.**
+## 15. Déploiement avec Docker Compose (production)
+
+Cette procédure utilise `docker-compose.prod.yml` et ne touche pas au
+`docker-compose.yml` de développement.
+
+### 15.1 Prérequis
+
+- Docker Engine 24+ et Docker Compose v2+
+- Un domaine pointant vers le serveur (ex: `dpp.example.com`)
+- Ports 80 et 443 ouverts sur le serveur
+
+### 15.2 Variables d'environnement
+
+```bash
+cp .env.prod.example .env.prod
+```
+
+Remplir obligatoirement :
+
+```bash
+DJANGO_SECRET_KEY=<valeur générée>
+DJANGO_ALLOWED_HOSTS=dpp.example.com,www.dpp.example.com
+CORS_ALLOWED_ORIGINS=https://dpp.example.com
+DB_PASSWORD=<mot-de-passe-fort>
+MYSQL_ROOT_PASSWORD=<mot-de-passe-root-fort>
+REDIS_PASSWORD=<mot-de-passe-redis-fort>
+VITE_API_URL=https://dpp.example.com
+```
+
+### 15.3 Générer la SECRET_KEY
+
+```bash
+python -c "from django.core.management.utils import get_random_secret_key; print(get_random_secret_key())"
+```
+
+### 15.4 Lancer en production
+
+```bash
+docker compose -f docker-compose.prod.yml build
+docker compose -f docker-compose.prod.yml up -d
+```
+
+Vérifier les logs :
+
+```bash
+docker compose -f docker-compose.prod.yml logs -f nginx
+docker compose -f docker-compose.prod.yml logs -f backend
+```
+
+### 15.5 Commandes utiles
+
+```bash
+# Créer un superutilisateur
+docker compose -f docker-compose.prod.yml exec backend python manage.py createsuperuser
+
+# Appliquer les migrations
+docker compose -f docker-compose.prod.yml exec backend python manage.py migrate --noinput
+
+# Collecter les statiques (si nécessaire)
+docker compose -f docker-compose.prod.yml exec backend python manage.py collectstatic --noinput
+
+# Arrêter
+docker compose -f docker-compose.prod.yml down
+
+# Voir l'état des services
+docker compose -f docker-compose.prod.yml ps
+```
 
 ---
 
-## Vérification
+## 16. Sécurité de l'interface admin
 
-**1.** Le dossier `docs/` existe à la racine du projet.
+L'URL `/admin/` donne accès à l'administration Django. En production :
 
-**2.** Le fichier `docs/DEPLOIEMENT.md` est créé.
+### Recommandation 1 — Renommer l'URL
 
-**3.** L'arborescence actuelle du projet ressemble à :
-dpp-assistant/
-├── README.md
-├── docs/
-│ ├── DPP_v2.md
-│ └── DEPLOIEMENT.md
-├── backend/
-│ ├── requirements.txt
-│ ├── .env.example
-│ └── ...
-└── frontend/
-└── ...
+Dans `backend/core/urls.py`, remplacer :
+
+```python
+path('admin/', admin.site.urls),
+```
+
+par un chemin moins évident :
+
+```python
+path('admin-<votre-mot-secret>/', admin.site.urls),
+```
+
+### Recommandation 2 — IP allowlist (via nginx)
+
+Dans `nginx.prod.conf`, ajouter une directive `allow` / `deny` sur le
+`location /admin/` :
+
+```nginx
+location /admin/ {
+    allow 192.168.1.0/24;   # Vos IPs autorisées
+    deny all;
+    proxy_pass http://backend:8000;
+    ...
+}
+```
+
+Les deux recommandations peuvent être combinées.
+
+---
+
+## 17. Options TLS
+
+### Option A — Nginx hôte + Let's Encrypt (recommandé)
+
+1. Laisser le conteneur `nginx` en HTTP (port 80).
+2. Installer Certbot sur l'hôte.
+3. Configurer Nginx sur l'hôte pour écouter le 443 avec les certificats
+   et proxy vers le port 80 du conteneur `dpp_nginx`.
+4. Renouvellement automatique via Certbot.
+
+Avantage : les certificats sont gérés en dehors des conteneurs, pas de
+problème de volume pour les chemins `/etc/letsencrypt`.
+
+### Option B — Cloudflare / reverse proxy cloud
+
+Si le site passe par Cloudflare ou un reverse proxy cloud :
+- SSL terminé en amont.
+- Le conteneur `nginx` reste en HTTP.
+- Aucune configuration TLS dans `nginx.prod.conf`.
+
+### Option C — TLS directement dans le conteneur nginx
+
+Décommenter le bloc SSL dans `nginx.prod.conf` et monter les certificats
+en volume :
+
+```yaml
+services:
+  nginx:
+    ...
+    volumes:
+      - ./nginx.prod.conf:/etc/nginx/conf.d/default.conf:ro
+      - /etc/letsencrypt/live/dpp.example.com:/etc/letsencrypt:ro
+      - dpp_staticfiles:/app/staticfiles:ro
+      - dpp_media:/app/media:ro
+```
+
+Cette option est déconseillée si vous avez déjà Certbot sur l'hôte.
+
+---
+
+## 18. Procédure de mise à jour (Docker Compose)
+
+```bash
+cd /var/www/dpp-assistant  # ou le dossier du projet
+
+# Sauvegarder la base
+mysqldump -u dpp_user -p dpp_assistant | gzip > /var/backups/dpp/pre-update-$(date +%Y-%m-%d).sql.gz
+
+# Récupérer les nouvelles versions
+git pull
+
+# Reconstruire et redémarrer
+docker compose -f docker-compose.prod.yml build
+docker compose -f docker-compose.prod.yml up -d --force-recreate
+
+# Vérifier les migrations (si nécessaire)
+docker compose -f docker-compose.prod.yml exec backend python manage.py migrate --noinput
+
+# Vérifier les logs
+docker compose -f docker-compose.prod.yml logs -f --tail=50
+```
+
+---
+
+## 19. Checklist avant mise en production
+
+- [ ] `.env.prod` créé et rempli (pas de valeur par défaut)
+- [ ] `DJANGO_SECRET_KEY` générée et unique
+- [ ] `DJANGO_DEBUG=False`
+- [ ] `DJANGO_ALLOWED_HOSTS` contient le vrai domaine
+- [ ] `CORS_ALLOWED_ORIGINS` restreint au vrai domaine
+- [ ] `REDIS_PASSWORD` défini (Redis ne doit pas être ouvert)
+- [ ] `MYSQL_ROOT_PASSWORD` et `DB_PASSWORD` forts et différents
+- [ ] Ports MySQL (3306) et Redis (6379) non exposés à l'extérieur
+- [ ] HTTPS configuré (Option A, B ou C)
+- [ ] `/admin/` renommé ou protégé par IP allowlist
+- [ ] Sauvegardes automatiques configurées
+- [ ] `docker compose -f docker-compose.prod.yml config` passe sans erreur
+- [ ] Build backend et frontend réussis
+- [ ] Superutilisateur créé
+- [ ] Logs vérifiés
+
+---
+
+## 20. Contacts et ressources
+
+Documentation technique complète : docs/DPP_v2.md
+
+Dépôt Git : <URL_DU_DEPOT>
+
+Mainteneur : <NOM_ET_EMAIL>
