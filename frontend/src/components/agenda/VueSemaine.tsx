@@ -12,6 +12,8 @@ import {
   getMinutesFromMidnight,
   memeJour,
 } from '../../utils/calendrier'
+import { Calendar } from 'lucide-react'
+import EmptyState from '../ui/EmptyState'
 
 const HEURE_DEBUT = 8
 const HEURE_FIN = 18
@@ -79,6 +81,15 @@ export default function VueSemaine({
       {/* Corps grille */}
       <div className="relative max-h-[600px] overflow-y-auto">
         <div className="grid grid-cols-[60px_repeat(7,1fr)]">
+          {evenements.length === 0 && (
+            <div className="col-span-8 py-12">
+              <EmptyState
+                title="Aucun événement cette semaine"
+                description="Cliquez sur une case vide pour créer un événement."
+                icon={<Calendar size={28} strokeWidth={1.5} />}
+              />
+            </div>
+          )}
           {/* Colonne heures */}
           <div className="border-r border-ink-100">
             {heures.map((h) => (

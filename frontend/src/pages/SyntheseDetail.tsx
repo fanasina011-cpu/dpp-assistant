@@ -21,6 +21,7 @@ import MetaGroup from '../components/detail/MetaGroup'
 import MetaItem from '../components/detail/MetaItem'
 import Button from '../components/ui/Button'
 import Card from '../components/ui/Card'
+import EmptyState from '../components/ui/EmptyState'
 import Avatar from '../components/ui/Avatar'
 import { deleteSynthese, fetchSynthese } from '../api/syntheses'
 import { estDirecteur as estDirecteurRole, usePermissions } from '../hooks/usePermissions'
@@ -224,11 +225,15 @@ export default function SyntheseDetail() {
         }
       >
         <Card title="Contenu de la synthèse">
-          <div className="bg-ink-50/60 border border-ink-100 rounded-md p-5 max-h-[70vh] overflow-y-auto">
-            <pre className="text-[12.5px] text-ink-800 whitespace-pre-wrap font-mono leading-relaxed">
-              {synthese.contenu}
-            </pre>
-          </div>
+          {synthese.contenu ? (
+            <div className="bg-ink-50/60 border border-ink-100 rounded-md p-5 max-h-[70vh] overflow-y-auto">
+              <pre className="text-[12.5px] text-ink-800 whitespace-pre-wrap font-mono leading-relaxed">
+                {synthese.contenu}
+              </pre>
+            </div>
+          ) : (
+            <EmptyState title="Aucun contenu" description="Cette synthèse ne contient pas de texte." />
+          )}
         </Card>
       </DetailPage>
 

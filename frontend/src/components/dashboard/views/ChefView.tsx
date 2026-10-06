@@ -28,6 +28,7 @@ import StatutBadge from '../../StatutBadge'
 import PrioriteBadge from '../../PrioriteBadge'
 import Avatar from '../../ui/Avatar'
 import Card from '../../ui/Card'
+import EmptyState from '../../ui/EmptyState'
 import type { DashboardData } from '../../../api/dashboard'
 import type { Tache } from '../../../types'
 
@@ -83,21 +84,6 @@ function SectionHeader({
         Voir tout
         <ArrowRight size={11} />
       </Link>
-    </div>
-  )
-}
-
-function EmptyState({
-  message,
-  icon,
-}: {
-  message: string
-  icon: React.ReactNode
-}) {
-  return (
-    <div className="flex flex-col items-center gap-1.5 py-8 text-ink-400">
-      {icon}
-      <p className="text-[12px]">{message}</p>
     </div>
   )
 }
@@ -295,7 +281,7 @@ export default function ChefView({ data, userNom }: ChefViewProps) {
           />
           {blocagesATraiter.length === 0 ? (
             <EmptyState
-              message="Aucun blocage dans votre périmètre."
+              title="Aucun blocage dans votre périmètre."
               icon={<CheckCircle2 size={28} strokeWidth={1.25} />}
             />
           ) : (
@@ -347,7 +333,7 @@ export default function ChefView({ data, userNom }: ChefViewProps) {
           />
           {dernieres_notifications.length === 0 ? (
             <EmptyState
-              message="Aucune notification."
+              title="Aucune notification."
               icon={<Bell size={28} strokeWidth={1.25} />}
             />
           ) : (
@@ -398,7 +384,7 @@ export default function ChefView({ data, userNom }: ChefViewProps) {
           />
           {chargeEquipe.length === 0 ? (
             <EmptyState
-              message="Aucun membre avec des tâches."
+              title="Aucun membre avec des tâches."
               icon={<Users size={28} strokeWidth={1.25} />}
             />
           ) : (
@@ -447,7 +433,7 @@ export default function ChefView({ data, userNom }: ChefViewProps) {
           />
           {evenements_jour.length === 0 ? (
             <EmptyState
-              message="Aucun événement aujourd'hui."
+              title="Aucun événement aujourd'hui."
               icon={<Calendar size={28} strokeWidth={1.25} />}
             />
           ) : (
@@ -508,15 +494,15 @@ export default function ChefView({ data, userNom }: ChefViewProps) {
       </div>
 
       {/* ===== ⑥ Mes tâches prioritaires ===== */}
-      {mes_taches.filter(
-        (t) => t.statut !== 'TERMINEE' && t.statut !== 'ANNULEE',
-      ).length > 0 && (
-        <Card>
-          <SectionHeader
-            icon={<ClipboardList size={14} className="text-ink-400" />}
-            title="Mes tâches prioritaires"
-            to="/mes-taches"
-          />
+      <Card>
+        <SectionHeader
+          icon={<ClipboardList size={14} className="text-ink-400" />}
+          title="Mes tâches prioritaires"
+          to="/mes-taches"
+        />
+        {mes_taches.filter(
+          (t) => t.statut !== 'TERMINEE' && t.statut !== 'ANNULEE',
+        ).length > 0 ? (
           <ul className="space-y-1.5">
             {mes_taches
               .filter(
@@ -562,8 +548,13 @@ export default function ChefView({ data, userNom }: ChefViewProps) {
                 </li>
               ))}
           </ul>
-        </Card>
-      )}
+        ) : (
+          <EmptyState
+            title="Aucune tâche prioritaire"
+            icon={<ClipboardList size={28} strokeWidth={1.5} />}
+          />
+        )}
+      </Card>
 
       {/* ===== ⑦ Instructions (reçues/à traiter) ===== */}
       {kpis.instructions_en_attente > 0 && (
