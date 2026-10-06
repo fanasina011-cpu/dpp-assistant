@@ -32,3 +32,8 @@ export function useMediaQuery(query: string): boolean {
 export function useIsMobile(): boolean {
   return useMediaQuery('(max-width: 767px)')
 }
+
+/** Vrai si l'écran est < 640px (mobile petit). */
+export function useIsSm(): boolean {
+  return useMediaQuery('(max-width: 639px)')
+}

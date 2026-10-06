@@ -5,7 +5,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import {
-  CalendarDays,
   ChevronLeft,
   ChevronRight,
   Plus,
@@ -20,6 +19,7 @@ import MiniCalendrier from '../components/agenda/MiniCalendrier'
 import EvenementFormModal from '../components/agenda/EvenementFormModal'
 import EvenementDetailModal from '../components/agenda/EvenementDetailModal'
 import ErrorState from '../components/ui/ErrorState'
+import { useIsSm } from '../hooks/useMediaQuery'
 import Button from '../components/ui/Button'
 import {
   NOMS_MOIS,
@@ -46,6 +46,8 @@ const TABS: { value: VueType; label: string }[] = [
 export default function Agenda() {
   const aujourdHui = new Date()
 
+  const isSm = useIsSm()
+
   // Onglet mémorisé
   const [vue, setVue] = useState<VueType>(() => {
     const saved = localStorage.getItem(STORAGE_KEY)
@@ -63,6 +65,9 @@ export default function Agenda() {
   const [dateInitialeForm, setDateInitialeForm] = useState<Date | undefined>()
   const [selectedEvenement, setSelectedEvenement] = useState<Evenement | null>(null)
   const [evenementEnEdition, setEvenementEnEdition] = useState<Evenement | null>(null)
+
+  // Sur petit mobile, forcer la vue liste au lieu de mois
+  const vueEffective = isSm && vue === 'mois' ? 'liste' : vue
 
   // Plage selon la vue
   const { debut, fin } = useMemo(() => {
@@ -178,7 +183,7 @@ export default function Agenda() {
                   type="button"
                   onClick={() => setVue(tab.value)}
                   className={`px-3 py-1.5 text-[12px] font-medium rounded-md transition-colors ${
-                    vue === tab.value
+                    vueEffective === tab.value
                       ? 'bg-white text-ink-900 shadow-sm'
                       : 'text-ink-500 hover:text-ink-800'
                   }`}
@@ -217,7 +222,6 @@ export default function Agenda() {
               variant="ghost"
               size="sm"
               onClick={allerAujourdHui}
-              leftIcon={<CalendarDays size={12} />}
             >
               Aujourd'hui
             </Button>
@@ -241,6 +245,7 @@ export default function Agenda() {
           <ErrorState error={error} onRetry={() => refetch()} />
         ) : (
           <>
+            {/* Vue Jour reste accessible sur mobile (Mois bascule en Liste) */}
             {vue === 'jour' && (
               <VueJour
                 date={dateRef}
@@ -249,7 +254,7 @@ export default function Agenda() {
               />
             )}
 
-            {vue === 'semaine' && (
+            {vueEffective === 'semaine' && (
               <div className="grid grid-cols-1 lg:grid-cols-[220px_minmax(0,1fr)] gap-4">
                 <MiniCalendrier
                   annee={dateRef.getFullYear()}
@@ -277,7 +282,7 @@ export default function Agenda() {
               </div>
             )}
 
-            {vue === 'mois' && (
+            {vueEffective === 'mois' && (
               <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_320px] gap-4">
                 <VueMois
                   annee={dateRef.getFullYear()}
@@ -294,7 +299,7 @@ export default function Agenda() {
               </div>
             )}
 
-            {vue === 'liste' && (
+            {vueEffective === 'liste' && (
               <div className="grid grid-cols-1 lg:grid-cols-[220px_minmax(0,1fr)] gap-4">
                 <MiniCalendrier
                   annee={dateRef.getFullYear()}
