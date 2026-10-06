@@ -412,22 +412,19 @@ export default function Historique() {
 
         {/* Card + toolbar + table */}
         <Card noPadding>
-          {/* Toolbar horizontale sur 1 ligne */}
-          <div className="px-4 py-3 border-b border-ink-100 flex items-center gap-2 overflow-x-auto sticky top-0 z-[2] bg-white">            {/* Recherche à gauche */}
-            <div className="shrink-0 w-56">
-              <SearchInput
-                value={recherche}
-                onChange={setRecherche}
-                placeholder="Rechercher..."
-              />
-            </div>
+          <div className="px-4 py-3 border-b border-ink-100 flex flex-wrap items-end gap-2">
+            <SearchInput
+              value={recherche}
+              onChange={setRecherche}
+              placeholder="Rechercher..."
+              className="w-full sm:flex-1 sm:w-auto min-w-0"
+            />
 
-            {/* Filtres alignés à droite */}
-            <div className="flex items-center gap-2 ml-auto shrink-0">
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full sm:w-auto">
               <Select
                 value={cibleFiltre}
                 onChange={(e) => setCibleFiltre(e.target.value)}
-                className="!w-auto !h-8 !py-0 !text-[13px]"
+                className="w-full sm:w-auto !h-8 !py-0 !text-[13px]"
               >
                 {CIBLES.map((c) => (
                   <option key={c.value} value={c.value}>
@@ -439,7 +436,7 @@ export default function Historique() {
               <Select
                 value={categorieFiltre}
                 onChange={(e) => setCategorieFiltre(e.target.value)}
-                className="!w-auto !h-8 !py-0 !text-[13px]"
+                className="w-full sm:w-auto !h-8 !py-0 !text-[13px]"
               >
                 {CATEGORIES_ACTION.map((c) => (
                   <option key={c.value} value={c.value}>
@@ -451,7 +448,7 @@ export default function Historique() {
               <Select
                 value={periodeFiltre}
                 onChange={(e) => setPeriodeFiltre(e.target.value)}
-                className="!w-auto !h-8 !py-0 !text-[13px]"
+                className="w-full sm:w-auto !h-8 !py-0 !text-[13px]"
               >
                 {PERIODES.map((p) => (
                   <option key={p.value} value={p.value}>
@@ -461,7 +458,7 @@ export default function Historique() {
               </Select>
 
               {aFiltresActifs && (
-                <Button variant="ghost" size="sm" onClick={resetFiltres}>
+                <Button variant="ghost" size="sm" onClick={resetFiltres} className="w-full sm:w-auto">
                   Réinitialiser
                 </Button>
               )}

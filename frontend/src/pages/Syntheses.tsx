@@ -272,18 +272,19 @@ export default function Syntheses() {
 
         {/* Card + toolbar + table */}
         <Card noPadding>
-          <div className="px-4 py-3 border-b border-ink-100 flex items-center gap-2 flex-wrap">
+          <div className="px-4 py-3 border-b border-ink-100 flex flex-wrap items-end gap-2">
             <SearchInput
               value={recherche}
               onChange={setRecherche}
               placeholder="Rechercher une synthèse..."
+              className="w-full sm:flex-1 sm:w-auto min-w-0"
             />
 
-            <div className="flex items-center gap-2 ml-auto">
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full sm:w-auto">
               <Select
                 value={typeFiltre}
                 onChange={(e) => setTypeFiltre(e.target.value)}
-                className="!w-auto !h-8 !py-0 !text-[13px]"
+                className="w-full sm:w-auto !h-8 !py-0 !text-[13px]"
               >
                 {TYPES.map((t) => (
                   <option key={t.value} value={t.value}>
@@ -293,7 +294,7 @@ export default function Syntheses() {
               </Select>
 
               {aFiltresActifs && (
-                <Button variant="ghost" size="sm" onClick={resetFiltres}>
+                <Button variant="ghost" size="sm" onClick={resetFiltres} className="w-full sm:w-auto">
                   Réinitialiser
                 </Button>
               )}

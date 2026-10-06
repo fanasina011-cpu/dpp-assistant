@@ -212,17 +212,18 @@ export default function Notifications() {
             <div />
           )}
 
-          <div className="flex items-center gap-2">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full sm:w-auto">
             {nonLues > 0 && (
-              <span className="text-[11px] bg-brand-50 text-brand-700 border border-brand-200 px-2 py-0.5 rounded-full font-medium inline-flex items-center gap-1">
+              <span className="text-[11px] bg-brand-50 text-brand-700 border border-brand-200 px-2 py-0.5 rounded-full font-medium inline-flex items-center gap-1 self-start sm:self-auto">
                 <Bell size={11} />
                 {nonLues}
               </span>
             )}
+            {/* TODO UX-2 : supprimer les !important quand Select aura size="xs" */}
             <Select
               value={filtre}
               onChange={(e) => setFiltre(e.target.value)}
-              className="!w-auto !h-8 !py-0 !text-[13px]"
+              className="w-full sm:w-auto !h-8 !py-0 !text-[13px]"
             >
               {FILTRES.map((f) => (
                 <option key={f.value} value={f.value}>

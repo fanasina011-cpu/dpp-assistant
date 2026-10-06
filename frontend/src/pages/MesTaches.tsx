@@ -374,18 +374,19 @@ export default function MesTaches() {
 
         {/* Card + toolbar + table */}
         <Card noPadding>
-          <div className="px-4 py-3 border-b border-ink-100 flex items-center gap-2 flex-wrap">
+          <div className="px-4 py-3 border-b border-ink-100 flex flex-wrap items-end gap-2">
             <SearchInput
               value={recherche}
               onChange={setRecherche}
               placeholder="Rechercher une tâche..."
+              className="w-full sm:flex-1 sm:w-auto min-w-0"
             />
 
-            <div className="flex items-center gap-2 ml-auto">
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full sm:w-auto">
               <Select
                 value={statutFiltre}
                 onChange={(e) => setStatutFiltre(e.target.value)}
-                className="!w-auto !h-8 !py-0 !text-[13px]"
+                className="w-full sm:w-auto !h-8 !py-0 !text-[13px]"
               >
                 {STATUTS.map((s) => (
                   <option key={s.value} value={s.value}>
@@ -397,7 +398,7 @@ export default function MesTaches() {
               <Select
                 value={prioriteFiltre}
                 onChange={(e) => setPrioriteFiltre(e.target.value)}
-                className="!w-auto !h-8 !py-0 !text-[13px]"
+                className="w-full sm:w-auto !h-8 !py-0 !text-[13px]"
               >
                 {PRIORITES.map((p) => (
                   <option key={p.value} value={p.value}>
@@ -409,7 +410,7 @@ export default function MesTaches() {
               <Select
                 value={echeanceFiltre}
                 onChange={(e) => setEcheanceFiltre(e.target.value)}
-                className="!w-auto !h-8 !py-0 !text-[13px]"
+                className="w-full sm:w-auto !h-8 !py-0 !text-[13px]"
               >
                 {ECHEANCES.map((e) => (
                   <option key={e.value} value={e.value}>
@@ -419,7 +420,7 @@ export default function MesTaches() {
               </Select>
 
               {aFiltresActifs && (
-                <Button variant="ghost" size="sm" onClick={resetFiltres}>
+                <Button variant="ghost" size="sm" onClick={resetFiltres} className="w-full sm:w-auto">
                   Réinitialiser
                 </Button>
               )}

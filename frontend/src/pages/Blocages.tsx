@@ -264,18 +264,19 @@ export default function Blocages() {
 
         {/* Card + toolbar + table */}
         <Card noPadding>
-          <div className="px-4 py-3 border-b border-ink-100 flex items-center gap-2 flex-wrap">
+          <div className="px-4 py-3 border-b border-ink-100 flex flex-wrap items-end gap-2">
             <SearchInput
               value={recherche}
               onChange={setRecherche}
               placeholder="Rechercher un blocage..."
+              className="w-full sm:flex-1 sm:w-auto min-w-0"
             />
 
-            <div className="flex items-center gap-2 ml-auto">
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full sm:w-auto">
               <Select
                 value={statutFiltre}
                 onChange={(e) => setStatutFiltre(e.target.value)}
-                className="!w-auto !h-8 !py-0 !text-[13px]"
+                className="w-full sm:w-auto !h-8 !py-0 !text-[13px]"
               >
                 {STATUTS.map((s) => (
                   <option key={s.value} value={s.value}>
@@ -287,7 +288,7 @@ export default function Blocages() {
               <Select
                 value={urgenceFiltre}
                 onChange={(e) => setUrgenceFiltre(e.target.value)}
-                className="!w-auto !h-8 !py-0 !text-[13px]"
+                className="w-full sm:w-auto !h-8 !py-0 !text-[13px]"
               >
                 {URGENCES.map((u) => (
                   <option key={u.value} value={u.value}>
@@ -300,12 +301,13 @@ export default function Blocages() {
                 variant={enAttenteEscalade ? 'primary' : 'secondary'}
                 size="sm"
                 onClick={() => setEnAttenteEscalade((v) => !v)}
+                className="w-full sm:w-auto"
               >
                 En attente d'escalade
               </Button>
 
               {aFiltresActifs && (
-                <Button variant="ghost" size="sm" onClick={resetFiltres}>
+                <Button variant="ghost" size="sm" onClick={resetFiltres} className="w-full sm:w-auto">
                   Réinitialiser
                 </Button>
               )}
