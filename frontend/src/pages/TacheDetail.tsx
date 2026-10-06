@@ -28,6 +28,7 @@ import {
 import Layout from '../components/Layout'
 import StatutBadge from '../components/StatutBadge'
 import PrioriteBadge from '../components/PrioriteBadge'
+import ErrorState from '../components/ui/ErrorState'
 import DetailPage from '../components/detail/DetailPage'
 import MetaGroup from '../components/detail/MetaGroup'
 import MetaItem from '../components/detail/MetaItem'
@@ -103,6 +104,7 @@ export default function TacheDetail() {
     data: tache,
     isLoading,
     error,
+    refetch,
   } = useQuery({
     queryKey: ['tache', tacheId],
     queryFn: () => fetchTache(tacheId),
@@ -252,21 +254,17 @@ export default function TacheDetail() {
     )
   }
 
-  if (error || !tache) {
+  const errorAffichee = error ?? {
+    response: { status: 404, data: { detail: 'Tâche introuvable' } },
+  }
+
+  if (errorAffichee || !tache) {
     return (
       <Layout title="Tâche">
         <Card>
-          <div className="py-12 flex flex-col items-center gap-3 text-center">
-            <div className="w-12 h-12 rounded-full bg-danger-bg text-danger flex items-center justify-center">
-              <AlertCircle size={22} />
-            </div>
-            <p className="text-[13px] text-ink-700">
-              Tâche introuvable ou accès refusé.
-            </p>
-            <Link
-              to="/taches"
-              className="inline-flex items-center gap-1 text-[12px] text-brand-600 hover:underline mt-2"
-            >
+          <ErrorState error={errorAffichee} onRetry={() => refetch()} />
+          <div className="mt-4 text-center">
+            <Link to="/taches" className="text-[12px] text-brand-600 hover:underline">
               ← Retour à la liste
             </Link>
           </div>

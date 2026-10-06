@@ -7,7 +7,7 @@
 import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
-import { AlertCircle, Inbox, ShieldAlert } from 'lucide-react'
+import { Inbox, ShieldAlert } from 'lucide-react'
 import Layout from '../components/Layout'
 import StatutBadge from '../components/StatutBadge'
 import UrgenceBadge from '../components/UrgenceBadge'
@@ -20,6 +20,7 @@ import Pagination from '../components/ui/Pagination'
 import SearchInput from '../components/ui/SearchInput'
 import Select from '../components/ui/Select'
 import Table, { Column, SortState } from '../components/ui/Table'
+import ErrorState from '../components/ui/ErrorState'
 import { fetchBlocagesPage } from '../api/blocages'
 import { fetchStats } from '../api/stats'
 import type { Blocage, StatsBlocages } from '../types'
@@ -168,6 +169,7 @@ export default function Blocages() {
     data,
     isLoading,
     error,
+    refetch,
   } = useQuery({
     queryKey: ['blocages', page, pageSize, filtres, ordering],
     queryFn: () =>
@@ -311,12 +313,7 @@ export default function Blocages() {
           </div>
 
           {error ? (
-            <div className="py-12 flex flex-col items-center gap-2 text-danger">
-              <AlertCircle size={22} />
-              <p className="text-sm">
-                Erreur lors du chargement des blocages.
-              </p>
-            </div>
+            <ErrorState error={error} onRetry={() => refetch()} />
           ) : (
             <Table
               columns={COLUMNS}

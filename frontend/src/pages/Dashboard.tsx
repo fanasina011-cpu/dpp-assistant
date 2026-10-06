@@ -3,9 +3,9 @@
  */
 
 import { useQuery } from '@tanstack/react-query'
-import { AlertCircle } from 'lucide-react'
 import Layout from '../components/Layout'
 import Card from '../components/ui/Card'
+import ErrorState from '../components/ui/ErrorState'
 import { ChefSkeleton, DirectorSkeleton, MemberSkeleton } from '../components/dashboard/Skeletons'
 import MemberView from '../components/dashboard/views/MemberView'
 import DirectorView from '../components/dashboard/views/DirectorView'
@@ -33,7 +33,7 @@ export default function Dashboard() {
       ? ChefSkeleton
       : MemberSkeleton
 
-  const { data, isLoading, error } = useQuery({
+  const { data, isLoading, error, refetch } = useQuery({
     queryKey: ['dashboard'],
     queryFn: fetchDashboard,
     refetchInterval: 60_000,
@@ -51,12 +51,7 @@ export default function Dashboard() {
     return (
       <Layout title="Tableau de bord">
         <Card>
-          <div className="py-12 flex flex-col items-center gap-2 text-danger">
-            <AlertCircle size={24} />
-            <p className="text-sm">
-              Erreur lors du chargement du tableau de bord.
-            </p>
-          </div>
+          <ErrorState error={error} onRetry={() => refetch()} />
         </Card>
       </Layout>
     )
