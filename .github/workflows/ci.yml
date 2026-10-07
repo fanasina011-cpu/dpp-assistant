@@ -15,8 +15,6 @@ jobs:
         env:
           MYSQL_ROOT_PASSWORD: root
           MYSQL_DATABASE: dpp_assistant
-          MYSQL_USER: dpp_user
-          MYSQL_PASSWORD: dpp_password
         ports:
           - 3306:3306
         options: >-
@@ -58,8 +56,8 @@ jobs:
           DJANGO_DEBUG: "True"
           DJANGO_ALLOWED_HOSTS: localhost,127.0.0.1
           DB_NAME: dpp_assistant
-          DB_USER: dpp_user
-          DB_PASSWORD: dpp_password
+          DB_USER: root
+          DB_PASSWORD: root
           DB_HOST: 127.0.0.1
           DB_PORT: "3306"
         run: pytest api/tests
