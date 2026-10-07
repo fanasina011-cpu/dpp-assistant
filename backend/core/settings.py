@@ -10,6 +10,8 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/6.1/ref/settings/
 """
 
+import logging
+import re
 import os
 from datetime import timedelta
 from pathlib import Path
@@ -263,3 +265,102 @@ if not DEBUG:
 
     # Nginx termine le TLS → signaler à Django que la requête est HTTPS
     SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+
+
+# ---------------------------------------------------------------------------
+# Logging
+# ---------------------------------------------------------------------------
+
+LOGS_DIR = BASE_DIR / 'logs'
+LOGS_DIR.mkdir(parents=True, exist_ok=True)
+
+
+def _mask_sensitive(message):
+    if not isinstance(message, str):
+        message = str(message)
+    patterns = [
+        (r'(Bearer\s+)[A-Za-z0-9\-_\.]+', r'\1***'),
+        (r'([a-z]+://[^:]+:)([^@]+)(@)', r'\1***\3'),
+        (r'(password["\']?\s*[:=]\s*["\']?)[^"\',\s]+', r'\1***'),
+        (r'(api[_-]?key["\']?\s*[:=]\s*["\']?)[^"\',\s]+', r'\1***'),
+        (r'(token["\']?\s*[:=]\s*["\']?)[^"\',\s]+', r'\1***'),
+        (r'(eyJ[A-Za-z0-9\-_]{10,}\.[A-Za-z0-9\-_]+\.[A-Za-z0-9\-_]+)', '***JWT***'),
+    ]
+    for pattern, repl in patterns:
+        message = re.sub(pattern, repl, message, flags=re.IGNORECASE)
+    return message
+
+
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'filters': {
+        'mask_sensitive': {
+            '()': 'core.logging_filters.MaskSensitiveFilter',
+        },
+    },
+    'formatters': {
+        'verbose': {
+            'format': '[%(asctime)s] %(levelname)s %(name)s — %(message)s',
+            'datefmt': '%Y-%m-%d %H:%M:%S',
+        },
+        'simple': {
+            'format': '%(levelname)s %(name)s — %(message)s',
+        },
+    },
+    'handlers': {
+        'console': {
+            'class': 'logging.StreamHandler',
+            'formatter': 'simple',
+            'level': 'DEBUG' if DEBUG else 'INFO',
+            'filters': ['mask_sensitive'],
+        },
+        'file_general': {
+            'class': 'logging.handlers.RotatingFileHandler',
+            'filename': LOGS_DIR / 'dpp.log',
+            'encoding': 'utf-8',
+            'maxBytes': 10 * 1024 * 1024,
+            'backupCount': 5,
+            'formatter': 'verbose',
+            'level': 'INFO',
+            'filters': ['mask_sensitive'],
+        },
+        'file_errors': {
+            'class': 'logging.handlers.RotatingFileHandler',
+            'filename': LOGS_DIR / 'dpp-errors.log',
+            'encoding': 'utf-8',
+            'maxBytes': 10 * 1024 * 1024,
+            'backupCount': 5,
+            'formatter': 'verbose',
+            'level': 'ERROR',
+            'filters': ['mask_sensitive'],
+        },
+    },
+    'loggers': {
+        'django': {
+            'handlers': ['console', 'file_general'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+        'django.request': {
+            'handlers': ['console', 'file_errors'],
+            'level': 'WARNING',
+            'propagate': False,
+        },
+        'django.db.backends': {
+            'handlers': ['console'],
+            'level': 'WARNING' if DEBUG else 'ERROR',
+            'propagate': False,
+        },
+        'api': {
+            'handlers': ['console', 'file_general', 'file_errors'],
+            'level': 'DEBUG' if DEBUG else 'INFO',
+            'propagate': False,
+        },
+        'celery': {
+            'handlers': ['console', 'file_general', 'file_errors'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+    },
+}

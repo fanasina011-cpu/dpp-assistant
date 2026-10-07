@@ -25,6 +25,8 @@ python manage.py migrate --noinput
 echo "Collecte des fichiers statiques..."
 python manage.py collectstatic --noinput
 
+mkdir -p /app/logs
+
 echo "Démarrage de Gunicorn..."
 exec gunicorn core.wsgi:application \
     --bind 0.0.0.0:8000 \

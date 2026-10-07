@@ -88,6 +88,7 @@ services:
     volumes:
       - dpp_media:/app/media
       - dpp_staticfiles:/app/staticfiles
+      - dpp_logs:/app/logs
 
   # --------------------------------------------------------------------------
   # Celery Worker
@@ -118,6 +119,7 @@ services:
     command: celery -A core worker -l info
     volumes:
       - dpp_media:/app/media
+      - dpp_logs:/app/logs
 
   # --------------------------------------------------------------------------
   # Celery Beat
@@ -148,6 +150,7 @@ services:
     command: celery -A core beat -l info
     volumes:
       - dpp_media:/app/media
+      - dpp_logs:/app/logs
 
   # --------------------------------------------------------------------------
   # Frontend React + Nginx (pas de port exposé)
@@ -189,3 +192,5 @@ volumes:
     name: dpp_redis_data
   dpp_staticfiles:
     name: dpp_staticfiles
+  dpp_logs:
+    name: dpp_logs

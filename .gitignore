@@ -23,6 +23,7 @@ coverage.xml
 
 # Django — runtime
 *.log
+logs/
 db.sqlite3
 db.sqlite3-journal
 media/

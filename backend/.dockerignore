@@ -13,6 +13,7 @@ htmlcov/
 # Django
 media/
 staticfiles/
+logs/
 db.sqlite3
 
 # Variables d'environnement locales

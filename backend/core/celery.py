@@ -5,6 +5,7 @@ Ce fichier est chargé automatiquement par Django via core/__init__.py.
 Il expose une instance `app` qui sert à la fois de worker et de client.
 """
 
+import logging
 import os
 
 from celery import Celery
@@ -24,6 +25,8 @@ app.conf.timezone = settings.TIME_ZONE
 
 # Découvre automatiquement les tâches dans les apps Django installées
 app.autodiscover_tasks()
+
+logger = logging.getLogger(__name__)
 
 
 # ---------------------------------------------------------------------------
@@ -62,4 +65,4 @@ app.conf.beat_schedule = {
 
 @app.task(bind=True, ignore_result=True)
 def debug_task(self):
-    print(f'Request: {self.request!r}')
+    logger.debug('Request: %r', self.request)
